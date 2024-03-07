@@ -11,29 +11,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Run stale_repos tool
-        id: stale-repos
         uses: github/stale-repos@v1
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           ORGANIZATION: ${{ secrets.ORGANIZATION }}
-          EXEMPT_TOPICS: ""
+          EXEMPT_TOPICS: "do-not-archive"
           INACTIVE_DAYS: 365
+          ACTIVITY_METHOD: "pushed"
 
-      - name: Print output of stale_repos tool
-        run: echo "${{ steps.stale-repos.outputs.inactiveRepos }}"
-      - uses: actions/github-script@v6
+      # This next step updates an existing issue. If you want a new issue every time, remove this step and remove the `issue-number: ${{ env.issue_number }}` line below.
+      - name: Check for the stale report issue
+        run: |
+          ISSUE_NUMBER=$(gh search issues "Stale repository report" --match title --json number --jq ".[0].number")
+          echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create issue
+        uses: peter-evans/create-issue-from-file@v5
         with:
-          script: |
-            const repos = ${{ steps.stale-repos.outputs.inactiveRepos }}
-            for (const repo of repos) {
-              console.log(repo);
-              const issue = await github.rest.issues.create({
-                owner: <ORG_OWNER>,
-                repo: <REPOSITORY>,
-                title: 'Stale repo' + repo.url,
-                body: 'This repo is stale. Please contact the owner to make it active again.',
-              });
-              console.log(issue);
-            }
-          github-token: ${{ secrets.GH_TOKEN }}
+          issue-number: ${{ env.issue_number }}
+          title: Stale repository report
+          content-filepath: ./stale_repos.md
+          assignees: <YOUR_GITHUB_HANDLE_HERE>
+          token: ${{ secrets.GITHUB_TOKEN }}
