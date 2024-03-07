@@ -17,10 +17,10 @@ jobs:
         uses: github/stale-repos@v1
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          ORGANIZATION: ${{ secrets.ORGANIZATION }}
+          ORGANIZATION: "robertcrockett"
           EXEMPT_TOPICS: "do-not-archive"
           INACTIVE_DAYS: 365
-          ACTIVITY_METHOD: "pushed"
+          ACTIVITY_METHOD: "default_branch_updated"
 
       # This next step updates an existing issue. If you want a new issue every time, remove this step and remove the `issue-number: ${{ env.issue_number }}` line below.
       - name: Check for the stale report issue
